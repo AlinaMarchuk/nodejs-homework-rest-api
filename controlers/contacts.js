@@ -1,5 +1,4 @@
 const { HttpError } = require("../helpers/HttpError");
-const { addSchema } = require("../helpers/validation");
 
 const {
   listContacts,
@@ -33,10 +32,7 @@ const getById = async (req, res, next) => {
 
 const addNewContact = async (req, res, next) => {
   try {
-    const { error } = addSchema.validate(req.body);
-    if (error) {
-      throw HttpError(400, error.message);
-    }
+    console.log(req.body);
     const result = await addContact(req.body);
     res.status(201).json(result);
   } catch (error) {
@@ -59,14 +55,7 @@ const deleteContact = async (req, res, next) => {
 
 const updateContact = async (req, res, next) => {
   try {
-    if (Object.keys(req.body).length === 0) {
-      throw HttpError(400, "Missing fields");
-    }
     const { contactId } = req.params;
-    const { error } = addSchema.validate(req.body);
-    if (error) {
-      throw HttpError(400, error.message);
-    }
     const result = await updateElement(contactId, req.body);
     if (!result) {
       throw HttpError(404, "Not found");
