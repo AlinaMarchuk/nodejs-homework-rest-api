@@ -32,7 +32,6 @@ const getById = async (req, res, next) => {
 
 const addNewContact = async (req, res, next) => {
   try {
-    console.log(req.body);
     const result = await addContact(req.body);
     res.status(201).json(result);
   } catch (error) {
