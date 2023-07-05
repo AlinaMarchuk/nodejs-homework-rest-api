@@ -1,16 +1,9 @@
 const { HttpError } = require("../helpers/HttpError");
-
-const {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-  updateElement,
-} = require("../models/contacts");
+const { Contact } = require("../models/contact");
 
 const getAll = async (req, res, next) => {
   try {
-    const result = await listContacts();
+    const result = await Contact.find();
     res.json(result);
   } catch (error) {
     next(error);
@@ -20,7 +13,7 @@ const getAll = async (req, res, next) => {
 const getById = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await getContactById(contactId);
+    const result = await Contact.findById(contactId);
     if (!result) {
       throw HttpError(404, "Not found");
     }
@@ -32,7 +25,7 @@ const getById = async (req, res, next) => {
 
 const addNewContact = async (req, res, next) => {
   try {
-    const result = await addContact(req.body);
+    const result = await Contact.create(req.body);
     res.status(201).json(result);
   } catch (error) {
     next(error);
@@ -42,7 +35,7 @@ const addNewContact = async (req, res, next) => {
 const deleteContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await removeContact(contactId);
+    const result = await Contact.findByIdAndDelete(contactId);
     if (!result) {
       throw HttpError(404, "Not found");
     }
@@ -55,7 +48,24 @@ const deleteContact = async (req, res, next) => {
 const updateContact = async (req, res, next) => {
   try {
     const { contactId } = req.params;
-    const result = await updateElement(contactId, req.body);
+    const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+      new: true,
+    });
+    if (!result) {
+      throw HttpError(404, "Not found");
+    }
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateStatusContact = async (req, res, next) => {
+  try {
+    const { contactId } = req.params;
+    const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+      new: true,
+    });
     if (!result) {
       throw HttpError(404, "Not found");
     }
@@ -71,4 +81,5 @@ module.exports = {
   addNewContact,
   deleteContact,
   updateContact,
+  updateStatusContact,
 };
