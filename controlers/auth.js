@@ -3,7 +3,13 @@ const { HttpError } = require("../helpers/HttpError");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const gravatar = require("gravatar");
+const path = require("path");
+const fs = require("fs/promises");
+const jimp = require("jimp");
 dotenv.config();
+
+const avatarsDir = path.join(__dirname, "../", "public", "avatars");
 
 const { SECRET_KEY } = process.env;
 
@@ -15,7 +21,12 @@ const registration = async (req, res, next) => {
     if (user) {
       throw HttpError(409, "Email is already in use");
     }
-    const result = await User.create({ ...req.body, password: hashPassword });
+    const avatarURL = gravatar.url(email);
+    const result = await User.create({
+      ...req.body,
+      password: hashPassword,
+      avatarURL,
+    });
     res.status(201).json({
       user: { email: result.email, subscription: result.subscription },
     });
@@ -67,9 +78,32 @@ const getCurrent = async (req, res, next) => {
   });
 };
 
+const changeAvatar = async (req, res, next) => {
+  try {
+    const { email, _id } = req.user;
+    const { path: tempUpload } = req.file;
+    const resizedAvatar = await jimp.read(tempUpload);
+    await resizedAvatar.resize(250, 250);
+    await resizedAvatar.writeAsync(tempUpload);
+    const [uniqName] = email.split("@");
+    const resultUpload = path.join(avatarsDir, `${uniqName}.jpg`);
+    const avatarURL = path.join("avatars", `${uniqName}.jpg`);
+    await fs.rename(tempUpload, resultUpload);
+    const result = await User.findByIdAndUpdate(_id, { avatarURL });
+
+    if (!result) {
+      throw HttpError(401, "Not authorized");
+    }
+    res.json({ avatarURL });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registration,
   login,
   logout,
   getCurrent,
+  changeAvatar,
 };
